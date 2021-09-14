@@ -20,8 +20,8 @@
  */
 
 package de.appplant.cordova.plugin.notification.receiver;
-
 import android.app.IntentService;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;

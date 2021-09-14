@@ -130,6 +130,7 @@ public class LocalNotification extends CordovaPlugin {
 
         cordova.getThreadPool().execute(new Runnable() {
             public void run() {
+
                 if (action.equals("ready")) {
                     deviceready();
                 } else
@@ -210,7 +211,7 @@ public class LocalNotification extends CordovaPlugin {
      *                JavaScript.
      */
     private void check (CallbackContext command) {
-        boolean allowed = getNotMgr().hasPermission();
+        boolean allowed = getNotMgr().getNotCompMgr().areNotificationsEnabled();
         success(command, allowed);
     }
 
@@ -262,7 +263,7 @@ public class LocalNotification extends CordovaPlugin {
      *                JavaScript.
      */
     private void schedule (JSONArray toasts, CallbackContext command) {
-        Manager mgr = getNotMgr();
+        Manager mgr = getNotMgr();  
 
         for (int i = 0; i < toasts.length(); i++) {
             JSONObject dict    = toasts.optJSONObject(i);

@@ -37,6 +37,9 @@ import static android.os.Build.VERSION_CODES.N;
 
 public final class ActionGroup {
 
+    // Default action group id
+  //  private static final String GENERAL_ACTION_GROUP = "DEFAULT_GROUP";
+
     // Saves all groups for later lookup.
     private static final Map<String, ActionGroup> groups = new HashMap<String, ActionGroup>();
 

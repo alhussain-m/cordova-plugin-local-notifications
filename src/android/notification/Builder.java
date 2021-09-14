@@ -21,31 +21,31 @@
 
 package de.appplant.cordova.plugin.notification;
 
+import android.app.ActivityManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.media.AudioAttributes;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationCompat.MessagingStyle.Message;
-import android.support.v4.media.app.NotificationCompat.MediaStyle;
+import androidx.core.app.NotificationCompat.MessagingStyle.Message;
+import androidx.media.app.NotificationCompat.MediaStyle;
 import android.support.v4.media.session.MediaSessionCompat;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.Paint;
-import android.graphics.Canvas;
+
+import androidx.core.app.NotificationCompat;
 
 import java.util.List;
 import java.util.Random;
 
 import de.appplant.cordova.plugin.notification.action.Action;
 
+import static android.app.PendingIntent.FLAG_CANCEL_CURRENT;
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static de.appplant.cordova.plugin.notification.Notification.EXTRA_UPDATE;
+
 
 /**
  * Builder class for local notifications. Build fully configured local
@@ -123,7 +123,7 @@ public final class Builder {
             return new Notification(context, options);
         }
 
-        Uri sound     = options.getSound();
+        Uri sound = options.getSound();
         Bundle extras = new Bundle();
 
         extras.putInt(Notification.EXTRA_ID, options.getId());
@@ -150,8 +150,32 @@ public final class Builder {
                 .setTimeoutAfter(options.getTimeout())
                 .setLights(options.getLedColor(), options.getLedOn(), options.getLedOff());
 
+//        String CHANNEL_ID = "my_channel_01";
+//
+//        builder.setChannelId(CHANNEL_ID);
+
         if (sound != Uri.EMPTY && !isUpdate()) {
             builder.setSound(sound);
+            if (android.os.Build.VERSION.SDK_INT == android.os.Build.VERSION_CODES.O) {
+                builder.setSound(null);
+//            }
+//
+//                AudioAttributes audioAttributes = new AudioAttributes.Builder()
+//                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+////                        .setUsage(AudioAttributes.USAGE_ALARM)
+//                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
+//                        .build();
+//
+//
+//
+//
+                if (!isAppOnForeground(context) || options.getPrio() > 0) {
+                    Ringtone r = RingtoneManager.getRingtone(context.getApplicationContext(), sound);
+                    r.play();
+                }
+            } else {
+                builder.setSound(sound);
+            }
         }
 
         if (options.isWithProgressBar()) {
@@ -159,18 +183,14 @@ public final class Builder {
                     options.getProgressMaxValue(),
                     options.getProgressValue(),
                     options.isIndeterminateProgress());
+        } else {
+            // Only set this when no progressbar is used, to prevent a timer reset.
+            builder.setWhen(options.getWhen());
         }
 
         if (options.hasLargeIcon()) {
             builder.setSmallIcon(options.getSmallIcon());
-
-            Bitmap largeIcon = options.getLargeIcon();
-
-            if (options.getLargeIconType().equals("circle")) {
-                largeIcon = getCircleBitmap(largeIcon);
-            }
-
-            builder.setLargeIcon(largeIcon);
+            builder.setLargeIcon(options.getLargeIcon());
         } else {
             builder.setSmallIcon(options.getSmallIcon());
         }
@@ -183,40 +203,19 @@ public final class Builder {
         return new Notification(context, options, builder);
     }
 
-    /**
-     * Convert a bitmap to a circular bitmap.
-     * This code has been extracted from the Phonegap Plugin Push plugin:
-     * https://github.com/phonegap/phonegap-plugin-push
-     *
-     * @param bitmap Bitmap to convert.
-     * @return Circular bitmap.
-     */
-    private Bitmap getCircleBitmap(Bitmap bitmap) {
-        if (bitmap == null) {
-            return null;
+    private boolean isAppOnForeground(Context context) {
+        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
+        if (appProcesses == null) {
+            return false;
         }
-
-        final Bitmap output = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), Bitmap.Config.ARGB_8888);
-        final Canvas canvas = new Canvas(output);
-        final int color = Color.RED;
-        final Paint paint = new Paint();
-        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
-        final RectF rectF = new RectF(rect);
-
-        paint.setAntiAlias(true);
-        canvas.drawARGB(0, 0, 0, 0);
-        paint.setColor(color);
-        float cx = bitmap.getWidth() / 2;
-        float cy = bitmap.getHeight() / 2;
-        float radius = cx < cy ? cx : cy;
-        canvas.drawCircle(cx, cy, radius, paint);
-
-        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-        canvas.drawBitmap(bitmap, rect, rect, paint);
-
-        bitmap.recycle();
-
-        return output;
+        final String packageName = context.getPackageName();
+        for (ActivityManager.RunningAppProcessInfo appProcess : appProcesses) {
+            if (appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND && appProcess.processName.equals(packageName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

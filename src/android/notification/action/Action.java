@@ -22,12 +22,15 @@
 package de.appplant.cordova.plugin.notification.action;
 
 import android.content.Context;
-import android.support.v4.app.RemoteInput;
+
+import androidx.core.app.RemoteInput;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import de.appplant.cordova.plugin.notification.util.AssetUtil;
+
+//import android.support.v4.app.RemoteInput;
 
 /**
  * Holds the icon and title components that would be used in a

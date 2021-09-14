@@ -37,7 +37,6 @@ exports._defaults = {
     group         : null,
     groupSummary  : false,
     icon          : null,
-    iconType      : null,
     id            : 0,
     launch        : true,
     led           : true,
@@ -575,8 +574,8 @@ exports._mergeWithDefaults = function (options) {
     }
 
     options.meta = {
-        plugin:  'cordova-plugin-local-notification',
-        version: '0.9-beta.3'
+        plugin:  'cordova-plugin-local-notification-fixed',
+        version: '0.10'
     };
 
     return options;
@@ -899,7 +898,7 @@ exports._exec = function (action, args, callback, scope) {
 
     if (Array.isArray(args)) {
         params = args;
-    } else if (args !== null) {
+    } else if (args) {
         params.push(args);
     }
 

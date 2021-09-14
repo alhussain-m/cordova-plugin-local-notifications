@@ -19,21 +19,20 @@
  * limitations under the License.
  */
 
-// codebeat:disable[TOO_MANY_FUNCTIONS]
-
 package de.appplant.cordova.plugin.notification;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationCompat.MessagingStyle.Message;
 import android.support.v4.media.session.MediaSessionCompat;
 
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationCompat.MessagingStyle.Message;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.lang.System;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -43,13 +42,13 @@ import de.appplant.cordova.plugin.notification.action.Action;
 import de.appplant.cordova.plugin.notification.action.ActionGroup;
 import de.appplant.cordova.plugin.notification.util.AssetUtil;
 
-import static android.support.v4.app.NotificationCompat.DEFAULT_LIGHTS;
-import static android.support.v4.app.NotificationCompat.DEFAULT_SOUND;
-import static android.support.v4.app.NotificationCompat.DEFAULT_VIBRATE;
-import static android.support.v4.app.NotificationCompat.PRIORITY_MAX;
-import static android.support.v4.app.NotificationCompat.PRIORITY_MIN;
-import static android.support.v4.app.NotificationCompat.VISIBILITY_PUBLIC;
-import static android.support.v4.app.NotificationCompat.VISIBILITY_SECRET;
+import static androidx.core.app.NotificationCompat.DEFAULT_LIGHTS;
+import static androidx.core.app.NotificationCompat.DEFAULT_SOUND;
+import static androidx.core.app.NotificationCompat.DEFAULT_VIBRATE;
+import static androidx.core.app.NotificationCompat.PRIORITY_MAX;
+import static androidx.core.app.NotificationCompat.PRIORITY_MIN;
+import static androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC;
+import static androidx.core.app.NotificationCompat.VISIBILITY_SECRET;
 
 /**
  * Wrapper around the JSON object passed through JS which contains all
@@ -66,9 +65,6 @@ public final class Options {
 
     // Default icon path
     private static final String DEFAULT_ICON = "res://icon";
-
-    // Default icon type
-    private static final String DEFAULT_ICON_TYPE = "square";
 
     // The original JSON object
     private final JSONObject options;
@@ -214,9 +210,8 @@ public final class Options {
     /**
      * The channel id of that notification.
      */
-    String getChannel() {
-        return options.optString("channel", Manager.CHANNEL_ID);
-    }
+    String getChannel() { return options.optString("channel", Manager.DEFAULT_CHANNEL_ID); }
+    String getChannelDescription() { return options.optString("channelDescription", Manager.DEFAULT_CHANNEL_DESCRIPTION); }
 
     /**
      * If the group shall show a summary.
@@ -377,13 +372,6 @@ public final class Options {
     }
 
     /**
-     * Type of the large icon.
-     */
-    String getLargeIconType() {
-        return options.optString("iconType", DEFAULT_ICON_TYPE);
-    }
-
-    /**
      * Small icon resource ID for the local notification.
      */
     int getSmallIcon() {
@@ -392,6 +380,10 @@ public final class Options {
 
         if (resId == 0) {
             resId = assets.getResId(DEFAULT_ICON);
+        }
+
+        if (resId == 0) {
+            resId = context.getApplicationInfo().icon;
         }
 
         if (resId == 0) {
@@ -404,14 +396,14 @@ public final class Options {
     /**
      * If the phone should vibrate.
      */
-    private boolean isWithVibration() {
+    public boolean isWithVibration() {
         return options.optBoolean("vibrate", true);
     }
 
     /**
      * If the phone should play no sound.
      */
-    private boolean isWithoutSound() {
+    public boolean isWithoutSound() {
         Object value = options.opt("sound");
         return value == null || value.equals(false);
     }
@@ -419,7 +411,7 @@ public final class Options {
     /**
      * If the phone should play the default sound.
      */
-    private boolean isWithDefaultSound() {
+    public boolean isWithDefaultSound() {
         Object value = options.opt("sound");
         return value != null && value.equals(true);
     }
@@ -427,7 +419,7 @@ public final class Options {
     /**
      * If the phone should show no LED light.
      */
-    private boolean isWithoutLights() {
+    public boolean isWithoutLights() {
         Object value = options.opt("led");
         return value == null || value.equals(false);
     }
@@ -435,7 +427,7 @@ public final class Options {
     /**
      * If the phone should show the default LED lights.
      */
-    private boolean isWithDefaultLights() {
+    public boolean isWithDefaultLights() {
         Object value = options.opt("led");
         return value != null && value.equals(true);
     }
@@ -488,9 +480,16 @@ public final class Options {
      * Gets the notifications priority.
      */
     int getPrio() {
-        int prio = options.optInt("priority");
+        return Math.min(Math.max(options.optInt("priority"), PRIORITY_MIN), PRIORITY_MAX);
+    }
 
-        return Math.min(Math.max(prio, PRIORITY_MIN), PRIORITY_MAX);
+    /**
+     * Set the when date for the notification.
+     */
+    long getWhen() {
+        long when = options.optLong("when");
+
+        return (when != 0) ? when : System.currentTimeMillis();
     }
 
     /**
@@ -685,5 +684,3 @@ public final class Options {
     }
 
 }
-
-// codebeat:enable[TOO_MANY_FUNCTIONS]
